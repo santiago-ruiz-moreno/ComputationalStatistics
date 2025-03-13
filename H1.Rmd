@@ -1,0 +1,107 @@
+---
+title: "Arithmetic Exercises"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+Exercise 1
+
+```{r, include=FALSE}
+
+
+
+```
+
+
+Exercise 2
+
+```{r , include=FALSE}
+
+
+
+```
+
+
+Exercise 3
+
+```{r , include=FALSE}
+
+
+
+```
+
+
+
+Exercise 4
+
+```{r , include=FALSE}
+
+
+
+```
+
+
+Exercise 4
+
+```{r, include=TRUE, echo=TRUE}
+
+function_x <- function(x) {
+  return((sqrt(1 + x) - 1) / x)
+}
+
+# Determine the values of R for x =1, 10^-4, 10^-32
+
+function_x(1)
+function_x(10^(-4))
+function_x(10^(-32))
+
+# The Taylor series expansion at 0 is
+
+taylor_expansion_at_zero <- function(y) {
+  return(1 + y / 2 - y^2 / 8 + y^3 / 16 - 5 * y^4 / 128)
+}
+
+approximation_result_function_x_at_zero <- function(x) {
+  return((taylor_expansion_at_zero(x) - 1) / x)
+}
+
+approximation_result_function_x_at_zero(1)
+approximation_result_function_x_at_zero(10^(-4))
+approximation_result_function_x_at_zero(10^(-32))
+
+# The taylor approximation is less accurate for values that are far from 0
+
+
+
+```
+
+Exercise 5
+
+```{r, include=TRUE, echo=TRUE}
+
+data("KNex", package = "Matrix")
+X <- as.matrix(KNex$mm)
+Y <- KNex$y
+
+fit <- lm.fit(X, Y)
+summary(fit)
+print(fit$coefficients)
+
+# Formula of Least Square estimator B = (X^T X)^-1 X^T Y
+# Let us try to find this (X^T X)^-1 part with 
+
+object.size(X)
+object.size(KNex$mm)
+# The class is a dgCMatrix, which is a sparse matrix. Meaning that it 
+# saves some space by not saving the zeros.
+class(KNex$mm)
+
+# Using the Cholesky Decomposition of the matrix (X^T X)^-1
+
+## Given a HPD (Hermitian Positive Definitive Matrix), there exist a 
+## lower triangular matrix L such that A =LL^H 
+
+
+```
