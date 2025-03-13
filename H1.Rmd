@@ -101,7 +101,10 @@ class(KNex$mm)
 # Using the Cholesky Decomposition of the matrix (X^T X)^-1
 
 ## Given a HPD (Hermitian Positive Definitive Matrix), there exist a 
-## lower triangular matrix L such that A =LL^H 
+## lower triangular matrix L such that A =LL^H
+
+
+
 
 
 ```
