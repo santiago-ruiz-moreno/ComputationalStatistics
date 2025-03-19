@@ -8,10 +8,6 @@ date: "`r Sys.Date()`"
 ---
 
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 # Exercise 1
 
 In this exercise, we are asked to calculate the limits for a system of number
@@ -400,7 +396,18 @@ grid()
 All looks good!
 
 
-Exercise 4
+# Exercise 4
+
+We want to calculate
+
+$$
+
+\frac{\sqrt{1 +x}-1}{x}
+
+$$
+
+
+## i) Determine the values of R for x =1, 10^-4, 10^-32
 
 ```{r, include=TRUE, echo=TRUE}
 
@@ -412,13 +419,17 @@ function_x_rationalisation <- function(x) {
   return(1 / (sqrt(1 + x) + 1))
 }
 
-# Determine the values of R for x =1, 10^-4, 10^-32
 
 function_x(1)
 function_x(10^(-4))
 function_x(10^(-32))
 
-# The Taylor series expansion at 0 is
+
+```
+
+## ii), iii) Use the Taylor series of $$\sqrt{1+x}$$ to approximate the result for small values of x. And Implement an approximate calculation of the result based on the Taylor series.
+
+```{r, include=TRUE, echo=TRUE}
 
 taylor_expansion_at_zero <- function(y) {
   return(1 + y / 2 - y^2 / 8 + y^3 / 16 - 5 * y^4 / 128 + 7 * y^5 / 256)
@@ -445,8 +456,11 @@ for (i in seq_len(200)) {
 combined_results <- c(multiplication_results_negative, multiplication_results_positive)
 sorted_results <- sort(combined_results)
 
-print(sorted_results)
+```
 
+## Compare the results for the two different calculations visually with a focus on small values of x. Explain what the problem is.
+
+```{r, include=TRUE, echo=TRUE}
 function_x_values <- sapply(sorted_results, function_x)
 approximation_values <- sapply(sorted_results, approximation_result_function_x_at_zero)
 function_x_rationalisation_values <- sapply(sorted_results, function_x_rationalisation)
@@ -477,20 +491,20 @@ print(function_x_rationalisation_increment_values[1])
 
 
 ```
-As shown in the first graph, the divergencews between the values of the taylor
+Answer: As shown in the first graph, the divergences between the values of the taylor
 approximation, and the function in its two forms differ when the
 values of zero are very small of the order of .Machine$double.eps that
 represents the minimal difference stored in doubles so that 1 + .Machine$double.eps is
-recognized as different than 1.  According to what we see in class we can think
-on two possible answers similar to computing the mean either through the sum of squares
+recognized as different than 1.  According to what we saw in class we can think
+on two possible answers. Similar to computing the mean either through the sum of squares
 of deviations or as the differences between the mean of the squared values and the 
-squared value of the mean, it may be that for values that R uses
+squared value of the mean, it may be R uses
 different process to solve (sqrt) and polynomial fractions that yield
 different results for very small values of x. It can be also that the taylor
 approximation is not accurate enough for very small values of x.
 
 
-* Exercise 5
+# Exercise 5
 
 ```{r, include=TRUE, echo=TRUE}
 
@@ -498,15 +512,12 @@ data("KNex", package = "Matrix")
 X <- as.matrix(KNex$mm)
 Y <- KNex$y
 
-# Not accurate type of execution.
+# It may be more accurate ways to compute the type of execution.
 start_time <- Sys.time()
 fit <- lm.fit(X, Y)
 end_time <- Sys.time()
 execution_time_lmfit <- end_time - start_time
-print(paste("Execution time:", execution_time))
-
-summary(fit)
-print(fit$coefficients)
+print(paste("Execution time:", execution_time_lmfit ))
 
 # Formula of Least Square estimator B = (X^T X)^-1 X^T Y
 # Let us try to find this (X^T X)^-1 part with 
@@ -515,8 +526,8 @@ print(fit$coefficients)
 ### Cholesky decomposition
 ###################################################
 # We find the product of the matrix X^TX (This matrix is symetric)
-# Crossprod tells him just to do half of the work, by computing only the upper triangular part of the matrix.
-
+# Crossprod makes it so that it computes only the lower triangular product, it does then only 
+# half of the work, by computing only the upper triangular part of the matrix.
 
 
 R <- chol(crossprod(X))
@@ -529,32 +540,101 @@ end_time <- Sys.time()
 execution_time_chol <- end_time - start_time
 print(paste("Execution time:", execution_time_chol))
 
-# It requires more time than the lm.fit function.
-
-
 ###################################################
 ### QR decomposition
 ###################################################
 QR <- qr(X)
 qr_betas <- backsolve(qr.R(QR), crossprod(qr.Q(QR), Y))
-solve(QR, y)
+solve(QR, Y)
+
+
+start_time <- Sys.time()
+qr_betas_solve <- solve(QR, Y)
+end_time <- Sys.time()
+execution_time_qr <- end_time - start_time
+print(paste("Execution time:", execution_time_qr))
+
 
 # The betas are identical, but the execution time is different.
+
 fit$coefficients[2]
 chol_betas[2]
 qr_betas[2]
 
-## 2.nd Part
+```
+
+Answer: LM FIT requires the longest execution time, followed by Cholesky decomposition and QR. The time
+seems to vary as if the algorithm used for solving all methods will depend on a random parameter.
+
+
+## Determine the class of the matrix mm and the vector y. Inspect the structure of mm and explain how the data is stored.
+
+
+```{r, include=TRUE, echo=TRUE}
+
+
 
 object.size(X)
-X_not_sparsed <- KNex$mm
-object.size(X_not_sparsed)
+X_sparse <- KNex$mm
+object.size(X_sparse)
+
 # The class is a dgCMatrix, which is a sparse matrix. Meaning that it 
 # saves some space by not saving the zeros.
+
 class(KNex$mm)
 class(X)
 
-?uniroot()
+# When storing the matrix as a "Matrix" object it requires more bits. (Almost 100 times more)
+# Computing the sparsity (count(0 entries in the matrix)/nXm)
+
+
+sparsity <- function(mat, tol = .00001) {
+    mat[abs(mat) < tol] <- 0
+    100 - (100 * sum((mat != 0) * 1) / prod(dim(mat)))
+}
+
+# Computing the sparsity in two ways
+sparsity(X)
+coop::sparsity(X)
+
+# Around 99 % of the values are very near to zero
+
+
+###################################################
+### Cholesky decomposition
+###################################################
+# We find the product of the matrix X^TX (This matrix is symetric)
+# Crossprod makes it so that it computes only the lower triangular product, it does then only 
+# half of the work, by computing only the upper triangular part of the matrix.
+
+
+R <- chol(crossprod(X_sparse))
+
+# Using Solve to find the inverse of both matrix and to multiply the right upper triangular matrix
+
+start_time <- Sys.time()
+chol_betas <- backsolve(R, forwardsolve(R, crossprod(X_sparse, Y), upper.tri = TRUE, transpose = TRUE))
+end_time <- Sys.time()
+execution_time_chol <- end_time - start_time
+print(paste("Execution time:", execution_time_chol))
+
+###################################################
+### QR decomposition
+###################################################
+QR <- qr(X_sparse)
+qr_betas <- backsolve(qr.R(QR), crossprod(qr.Q(QR), Y))
+
+
+
+start_time <- Sys.time()
+qr_betas_solve <- solve(QR, Y)
+end_time <- Sys.time()
+execution_time_qr <- end_time - start_time
+print(paste("Execution time:", execution_time_qr))
 
 ```
+
+The execution time for the QR is smaller for the sparse matrix. However, using the Cholesky method in a sparse matrix
+increases the computation time.
+
 
