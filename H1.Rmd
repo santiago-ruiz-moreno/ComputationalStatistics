@@ -33,16 +33,6 @@ Exercise 3
 ```
 
 
-
-Exercise 4
-
-```{r , include=FALSE}
-
-
-
-```
-
-
 Exercise 4
 
 ```{r, include=TRUE, echo=TRUE}
@@ -89,8 +79,6 @@ combined_results <- c(multiplication_results_negative, multiplication_results_po
 sorted_results <- sort(combined_results)
 
 print(sorted_results)
-
-
 
 function_x_values <- sapply(sorted_results, function_x)
 approximation_values <- sapply(sorted_results, approximation_result_function_x_at_zero)
@@ -156,17 +144,13 @@ print(fit$coefficients)
 # Formula of Least Square estimator B = (X^T X)^-1 X^T Y
 # Let us try to find this (X^T X)^-1 part with 
 
-object.size(X)
-object.size(KNex$mm)
-# The class is a dgCMatrix, which is a sparse matrix. Meaning that it 
-# saves some space by not saving the zeros.
-class(KNex$mm)
-
-
 ###################################################
 ### Cholesky decomposition
 ###################################################
-# We find the product of the matrix X^T X 
+# We find the product of the matrix X^TX (This matrix is symetric)
+# Crossprod tells him just to do half of the work, by computing only the upper triangular part of the matrix.
+
+
 
 R <- chol(crossprod(X))
 
@@ -188,10 +172,22 @@ QR <- qr(X)
 qr_betas <- backsolve(qr.R(QR), crossprod(qr.Q(QR), Y))
 solve(QR, y)
 
-# The betas are the same.
-fit$coefficients[1]
-chol_betas[1]
-qr_betas[1]
+# The betas are identical, but the execution time is different.
+fit$coefficients[2]
+chol_betas[2]
+qr_betas[2]
+
+## 2.nd Part
+
+object.size(X)
+X_not_sparsed <- KNex$mm
+object.size(X_not_sparsed)
+# The class is a dgCMatrix, which is a sparse matrix. Meaning that it 
+# saves some space by not saving the zeros.
+class(KNex$mm)
+class(X)
+
+?uniroot()
 
 ```
 
