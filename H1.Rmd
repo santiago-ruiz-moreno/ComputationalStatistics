@@ -1,36 +1,403 @@
 ---
-title: "Arithmetic Exercises"
-author: "Your Name"
+title: "**Homework 1**"
+author: "Santiago Ruiz, Nikita Karetnikov, "
+output:
+  pdf_document:
+    number_sections: true
 date: "`r Sys.Date()`"
-output: html_document
 ---
 
 
-Exercise 1
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-```{r, include=FALSE}
+# Exercise 1
+
+In this exercise, we are asked to calculate the limits for a system of number
+representations with the following parameters:
+
+
+- \( b = 10 \) base
+- \( m = 3 \) mantissa length
+- \( e_{\min} = -3 \)
+- \( e_{\max} = 4 \)
+
+
+To calculate the required numbers we would need the following formula:
+
+$$
+x = (-1)^{w_0} b^e \sum_{i=1}^{m} u_i b^{-i}
+$$
+Let us implement it in R:
+
+```{r}
+
+calculate <- function(w0, b, e, u,m){
+  mantissa <- 0   
+  
+  for (i in 1:m) {
+    mantissa <- mantissa + u[i] * b^(-i)
+  }
+  
+  x <- (-1)^w0 * b^e * mantissa
+  
+  return(x)
+}
+
+```
+
+Good! Now we will be able to determine the required numbers.
+
+
+
+## Determine the largest floating point number
+
+We start with  the largest floating point number.
+We assume that the largest number should have:
+
+- the largest possible exponent
+- mantissa with the largest digits in this system (which should be equal to b-1)
+
+
+```{r}
+
+b <- 10  
+m <- 3
+
+e_min <- -3  
+e_max <- 4
+
+
+x_max <- calculate(w0=0, b=b, e=e_max, u= rep(b-1, m),m=m)
+print(x_max)
+
+```
+
+
+
+## Determine the smallest positive floating point number
+
+Now we should determine the smallest positive floating point number.
+We assume that the largest number should have:
+
+- the smallest possible exponent
+- mantissa with the smallest digits in this system (which should be equal to 0)
+
+But since mantissa should start with non-zero we set its digits to [1,0,0] :
+
+```{r}
+
+x_min <- calculate(w0 = 0, b = b, e = e_min, u = c(1,0,0), m = m)
+
+print(x_min)
+
+```
+
+## Determine the largest floating point number smaller than one.
+
+Now we should find the number that approaches value of 1, but that is smaller 
+then one.
+
+We set:
+- exponent to 0
+- mantissa to have largest digits in this system (which should be equal to b-1)
+
+
+```{r}
+x_max_2 <- calculate(w0 = 0, b = b, e = 0, u= rep(b-1, m), m = m)
+print(x_max_2)
+```
+
+## Determine the smallest floating point number greater than one
+
+Now similarly we should find the number that is closest to one, but is bigger
+than one. 
+
+We set:
+- exponent to 0
+- mantissa digits to be equal to [1,0,1] 
+
+```{r}
+x_min_2 <- calculate(w0 = 0, b = b, e = 1, u = c(1,0,1), m = m)
+print(x_min_2)
+
+```
+
+
+# Exercise 2
+
+In this exercise we need to understand the limits or R number representation
+system by running experiments with convergence of the series.
+
+## For which n does the loop stop? (practical part)
+
+We first implement convergence in R. We run the loop until the difference
+between \( S_{n+1} \) and \( S_n \) becomes smaller than the smallest number
+that R can distinguish.
+.
+
+```{r}
+
+S_n_prev <- -1  
+S_n <- 0
+n <- 0  
+
+while (abs(S_n - S_n_prev) > .Machine$double.eps){ 
+  n <-  n + 1
+  S_n_prev  <- S_n
+  S_n <- S_n_prev + 2^(-2 * n)
+}
+
+cat("Loop stops at n =",n)
+
+```
+
+## For which n does the loop stop? (theoretical part)
+
+Now we need to theoretically approximate the value of \( n \) at which the loop stops. 
+We observe that the convergence of our series resembles the formula used to represent numbers in R.
+
+
+$$
+\sum_{i=1}^{\infty} 2^{-2i} 
+\quad\quad\quad\quad
+x = (-1)^{w_0} b^{e} \sum_{i=1}^{m} u_i b^{-i}
+$$
+Let us remind ourselves what is mantissa length and base in  R is:
+```{r}
+
+
+m <-  .Machine$double.digits
+cat("Mantissa length (m):", m, "\n")
+
+b <-  .Machine$double.base
+cat("Base (b):", b, "\n")
+
+```
+
+With each iteration, the summation approaches its limit more closely, but the increment decreases rapidly (each term is \(2^{-2i}\)). Due to floating-point representation limits in R (with a mantissa length \( m = 53 \) bits for double precision), the smallest distinguishable difference around 1 is about \(2^{-53}\).
+
+The summation stops updating numerically when the next term \(2^{-2n}\) becomes smaller than this limit:
+
+$$
+2^{-2n} \approx 2^{-m} \quad \Rightarrow \quad n = \frac{m}{2} = \frac{53}{2} = 26.5
+$$
+26.5 is quite close to the practical stopping point we found earlier.
+
+
+
+
+
+
+# Exercise 3
+
+In this exercise we are asked to approximate exp(x) using Taylor series.
+
+
+$$
+\exp(x) = \sum_{i=0}^{\infty} \frac{x^i}{i!}
+$$
+
+## (i)
+
+We implement an algorithm in R that approximates the exponential function $\exp(x)$ using the Taylor series expansion. The algorithm iteratively adds terms from the Taylor series until the absolute value of the next summand is smaller than \texttt{.Machine\$double.eps\textasciicircum(1/2)} times the absolute value of the current approximation.
+
+We run it to identify how many summands we need to approximate $\exp(x=10)$
+
+```{r}
+
+
+
+
+calculate_exp <- function(X){
+  term <- 1              
+  sum <- term            
+  n <- 0                 
+  epsilon <- .Machine$double.eps^(1/2)  
+    
+    
+  while (abs(term) > epsilon * abs(sum)) {
+    
+    n <- n + 1
+    term <- (X^n) / factorial(n)  
+    sum <- sum + term
+  
+
+  } 
+  return(sum)
+  
+}
+
+X <- 40
+
+
+
+cat("Our function:", calculate_exp(X), "\n")
+
+cat("R actual function", exp(X), "\n")
+
+
+```
+
+Looks that our implemented function closely matches R's built-in calculation of the exponential function.
+the exponent.
+
+
+## (ii)
+
+
+Next, we evaluate the approximation for various values of $X$, both positive
+and negative. We calculate the MAPE for values ranging from $-20$ to $200$.
+
+
+
+
+
+
+```{r}
+
+X_values <- seq(-20, 200, by=1)
+errors <- numeric(length(X_values)) 
+
+for (i in seq_along(X_values)) {
+  X <- X_values[i]
+  
+  
+  mape <- mean(abs((exp(X) - calculate_exp(X)) / exp(X))) * 100
+
+  
+  
+  errors[i] <- mape  
+}
+
+
+plot(X_values, errors, type = "b", col = "blue",
+     xlab = "X Value", ylab = "Error",
+     main = "Error of Taylor Approximation of exp(X)",
+     ylim = c(0, 10))  # Adjust these limits as needed for your data
+grid()
+
+```
+
+We notice that for lower values, MAPE increases starting approximately from $-10$.  
+For values of $X$ higher than $100$, MAPE is absent as the approximation
+of the exponent is probably equal to $\infty$.
+
+
+
+Let us check:
+
+```{r}
+X <- 101
+
+cat("Our function:", calculate_exp(X), "\n")
+
+cat("R actual function", exp(X), "\n")
+
+
+```
+
+```{r}
+X <- -20
+
+cat("Our function:", calculate_exp(X), "\n")
+
+cat("R actual function", exp(X), "\n")
+
+
+```
+
+
+
+Indeed, either our approximations are too far from the actual values of the
+function, or our approximations are equal to infinity.
+
+
+
+
+
+## (iii)
+
+
+
+Let us suggest a modification how to fix the numerical instability. We use the 
+following property:
+
+
+$$
+e^{x} = \left(e^{x/n}\right)^n
+$$
+
+We implement it in our updated function as a wrapper:
+
+
+
+
+```{r}
+calculate_exp_2 <- function(x, n = 10) {
+    x_n <- x / n
+    result <- calculate_exp(x_n)^n
+    return(result)
+}
+
+
+```
+
+Let's first check it for single values:
+
+```{r}
+X <- -20
+
+cat("Our function:", calculate_exp_2(X), "\n")
+
+cat("R actual function", exp(X), "\n")
+
+
+```
+
+```{r}
+X <- 101
+
+cat("Our function:", calculate_exp_2(X), "\n")
+
+cat("R actual function", exp(X), "\n")
+
+
+```
+
+And now for our range:
+
+```{r}
+
+X_values <- seq(-20, 200, by=1)
+errors <- numeric(length(X_values)) 
+
+for (i in seq_along(X_values)) {
+  X <- X_values[i]
+  
+  
+ mape <- mean(abs((exp(X) - calculate_exp_2(X)) / exp(X))) * 100
+
+  
+  
+  errors[i] <- mape  
+}
+
+# plotting
+
+plot(X_values, errors, type = "b", col = "blue",
+     xlab = "X Value", ylab = "Error",
+     main = "Error of Taylor Approximation of exp(X)",
+     ylim = c(0, 10))  # Adjust these limits as needed for your data
+grid()
 
 
 
 ```
 
 
-Exercise 2
-
-```{r , include=FALSE}
-
-
-
-```
-
-
-Exercise 3
-
-```{r , include=FALSE}
-
-
-
-```
+All looks good!
 
 
 Exercise 4
