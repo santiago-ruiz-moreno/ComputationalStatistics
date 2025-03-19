@@ -407,7 +407,7 @@ $$
 $$
 
 
-## i) Determine the values of R for x =1, 10^-4, 10^-32
+## i Determine the values of R for x =1, 10^-4, 10^-32
 
 ```{r, include=TRUE, echo=TRUE}
 
@@ -427,7 +427,7 @@ function_x(10^(-32))
 
 ```
 
-## ii), iii) Use the Taylor series of $$\sqrt{1+x}$$ to approximate the result for small values of x. And Implement an approximate calculation of the result based on the Taylor series.
+## ii, iii Use the Taylor series of $$\sqrt{1+x}$$ to approximate the result for small values of x. And Implement an approximate calculation of the result based on the Taylor series.
 
 ```{r, include=TRUE, echo=TRUE}
 
@@ -572,11 +572,16 @@ seems to vary as if the algorithm used for solving all methods will depend on a 
 
 ```{r, include=TRUE, echo=TRUE}
 
-
+library(coop)
+library(Matrix)
 
 object.size(X)
 X_sparse <- KNex$mm
 object.size(X_sparse)
+
+X_sparse_matrix <- Matrix(KNex$mm, sparse = TRUE)
+object.size(X_sparse_matrix)
+# Storing the matrix using the Matrix library and the sparse option makes it even a lower-bit file.
 
 # The class is a dgCMatrix, which is a sparse matrix. Meaning that it 
 # saves some space by not saving the zeros.
@@ -608,12 +613,13 @@ coop::sparsity(X)
 # half of the work, by computing only the upper triangular part of the matrix.
 
 
-R <- chol(crossprod(X_sparse))
+R <- chol(crossprod(X_sparse_matrix))
+# Since crossprod only works with Matrixes of vectors, I transformed the mm dgCMatrix into a Matrix
 
 # Using Solve to find the inverse of both matrix and to multiply the right upper triangular matrix
 
 start_time <- Sys.time()
-chol_betas <- backsolve(R, forwardsolve(R, crossprod(X_sparse, Y), upper.tri = TRUE, transpose = TRUE))
+chol_betas <- backsolve(R, forwardsolve(R, crossprod(X_sparse_matrix , Y), upper.tri = TRUE, transpose = TRUE))
 end_time <- Sys.time()
 execution_time_chol <- end_time - start_time
 print(paste("Execution time:", execution_time_chol))
@@ -631,6 +637,11 @@ qr_betas_solve <- solve(QR, Y)
 end_time <- Sys.time()
 execution_time_qr <- end_time - start_time
 print(paste("Execution time:", execution_time_qr))
+
+fit$coefficients[2]
+chol_betas[2]
+qr_betas[2]
+
 
 ```
 
