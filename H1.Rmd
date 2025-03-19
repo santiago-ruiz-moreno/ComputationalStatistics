@@ -51,6 +51,10 @@ function_x <- function(x) {
   return((sqrt(1 + x) - 1) / x)
 }
 
+function_x_rationalisation <- function(x) {
+  return(1 / (sqrt(1 + x) + 1))
+}
+
 # Determine the values of R for x =1, 10^-4, 10^-32
 
 function_x(1)
@@ -60,7 +64,7 @@ function_x(10^(-32))
 # The Taylor series expansion at 0 is
 
 taylor_expansion_at_zero <- function(y) {
-  return(1 + y / 2 - y^2 / 8 + y^3 / 16 - 5 * y^4 / 128)
+  return(1 + y / 2 - y^2 / 8 + y^3 / 16 - 5 * y^4 / 128 + 7 * y^5 / 256)
 }
 
 approximation_result_function_x_at_zero <- function(x) {
@@ -71,13 +75,67 @@ approximation_result_function_x_at_zero(1)
 approximation_result_function_x_at_zero(10^(-4))
 approximation_result_function_x_at_zero(10^(-32))
 
-# The taylor approximation is less accurate for values that are far from 0
 
+# Create a loop that stores the results of a multiplication in a vector
+multiplication_results_negative <- numeric(100)
+multiplication_results_positive <- numeric(100)
+
+for (i in seq_len(200)) {
+  multiplication_results_negative[i] <- .Machine$double.eps*i + 0
+  multiplication_results_positive[i] <- -.Machine$double.eps*i + 0
+}
+
+combined_results <- c(multiplication_results_negative, multiplication_results_positive)
+sorted_results <- sort(combined_results)
+
+print(sorted_results)
+
+
+
+function_x_values <- sapply(sorted_results, function_x)
+approximation_values <- sapply(sorted_results, approximation_result_function_x_at_zero)
+function_x_rationalisation_values <- sapply(sorted_results, function_x_rationalisation)
+
+plot(sorted_results, function_x_values, type = "l", col = "blue", ylim = range(c(function_x_values, approximation_values)), ylab = "Values", xlab = "x", main = "Comparison of function_x and its Taylor Approximation")
+lines(sorted_results, approximation_values, col = "red")
+lines(sorted_results, function_x_rationalisation_values, col = "green")
+legend("topright", legend = c("function_x", "Taylor Expansion", "Function_x_rationalisation"), col = c("blue", "red","green"), lty = 1)
+
+
+# With greater values of around o
+increment_values <- seq(-0.0005, 0.0005, length.out = 1000)
+
+# Calculate function values for the new vector
+function_x_increment_values <- sapply(increment_values, function_x)
+approximation_increment_values <- sapply(increment_values, approximation_result_function_x_at_zero)
+function_x_rationalisation_increment_values <- sapply(increment_values, function_x_rationalisation)
+
+# Plot the new values
+plot(increment_values, function_x_increment_values, type = "l", col = "blue", ylim = range(c(function_x_increment_values, approximation_increment_values)), ylab = "Values", xlab = "x", main = "Comparison of function_x and its Taylor Approximation")
+lines(increment_values, approximation_increment_values, col = "red")
+lines(increment_values, function_x_rationalisation_increment_values, col = "green")
+legend("topright", legend = c("function_x", "Taylor Expansion", "Function_x_rationalisation"), col = c("blue", "red", "green"), lty = 1)
+
+print(function_x_increment_values[1])
+print(approximation_increment_values[1])
+print(function_x_rationalisation_increment_values[1])
 
 
 ```
+As shown in the first graph, the divergencews between the values of the taylor
+approximation, and the function in its two forms differ when the
+values of zero are very small of the order of .Machine$double.eps that
+represents the minimal difference stored in doubles so that 1 + .Machine$double.eps is
+recognized as different than 1.  According to what we see in class we can think
+on two possible answers similar to computing the mean either through the sum of squares
+of deviations or as the differences between the mean of the squared values and the 
+squared value of the mean, it may be that for values that R uses
+different process to solve (sqrt) and polynomial fractions that yield
+different results for very small values of x. It can be also that the taylor
+approximation is not accurate enough for very small values of x.
 
-Exercise 5
+
+* Exercise 5
 
 ```{r, include=TRUE, echo=TRUE}
 
@@ -85,7 +143,13 @@ data("KNex", package = "Matrix")
 X <- as.matrix(KNex$mm)
 Y <- KNex$y
 
+# Not accurate type of execution.
+start_time <- Sys.time()
 fit <- lm.fit(X, Y)
+end_time <- Sys.time()
+execution_time_lmfit <- end_time - start_time
+print(paste("Execution time:", execution_time))
+
 summary(fit)
 print(fit$coefficients)
 
@@ -98,13 +162,36 @@ object.size(KNex$mm)
 # saves some space by not saving the zeros.
 class(KNex$mm)
 
-# Using the Cholesky Decomposition of the matrix (X^T X)^-1
 
-## Given a HPD (Hermitian Positive Definitive Matrix), there exist a 
-## lower triangular matrix L such that A =LL^H
+###################################################
+### Cholesky decomposition
+###################################################
+# We find the product of the matrix X^T X 
+
+R <- chol(crossprod(X))
+
+# Using Solve to find the inverse of both matrix and to multiply the right upper triangular matrix
+
+start_time <- Sys.time()
+chol_betas <- backsolve(R, forwardsolve(R, crossprod(X, Y), upper.tri = TRUE, transpose = TRUE))
+end_time <- Sys.time()
+execution_time_chol <- end_time - start_time
+print(paste("Execution time:", execution_time_chol))
+
+# It requires more time than the lm.fit function.
 
 
+###################################################
+### QR decomposition
+###################################################
+QR <- qr(X)
+qr_betas <- backsolve(qr.R(QR), crossprod(qr.Q(QR), Y))
+solve(QR, y)
 
-
+# The betas are the same.
+fit$coefficients[1]
+chol_betas[1]
+qr_betas[1]
 
 ```
+
