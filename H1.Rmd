@@ -400,11 +400,7 @@ All looks good!
 
 We want to calculate
 
-$$
-
-\frac{\sqrt{1 +x}-1}{x}
-
-$$
+$$\frac{\sqrt{1 +x}-1}{x}$$
 
 
 ## i Determine the values of R for x =1, 10^-4, 10^-32
