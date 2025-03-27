@@ -558,7 +558,7 @@ Answer: LM FIT requires the longest execution time, followed by Cholesky decompo
 seems to vary as if the algorithm used for solving all methods will depend on a random parameter.
 
 
-## Determine the class of the matrix mm and the vector y. Inspect the structure of mm and explain how the data is stored. ## Determine the sparsity level of the matrix, i.e., the proportion of non-zero entries in the matrix. Also determine an estimate of the memory being used by mm and as.matrix(mm) in MB (see ?object.size).
+## Determine the class of the matrix mm and the vector y. Inspect the structure of mm and explain how the data is stored. Determine the sparsity level of the matrix, i.e., the proportion of non-zero entries in the matrix. Also determine an estimate of the memory being used by mm and as.matrix(mm) in MB (see ?object.size).
 
 
 
