@@ -184,8 +184,6 @@ $$
 
 
 
-
-
 # Exercise 3
 
 In this exercise we are asked to approximate exp(x) using Taylor series.
@@ -393,9 +391,6 @@ grid()
 ```
 
 
-All looks good!
-
-
 # Exercise 4
 
 We want to calculate
@@ -403,7 +398,7 @@ We want to calculate
 $$\frac{\sqrt{1 +x}-1}{x}$$
 
 
-## i Determine the values of R for x =1, 10^-4, 10^-32
+## Determine the values of R for x =1, 10^-4, 10^-32
 
 ```{r, include=TRUE, echo=TRUE}
 
@@ -423,7 +418,7 @@ function_x(10^(-32))
 
 ```
 
-## ii, iii Use the Taylor series of $$\sqrt{1+x}$$ to approximate the result for small values of x. And Implement an approximate calculation of the result based on the Taylor series.
+##  Use the Taylor series of $$\sqrt{1+x}$$ to approximate the result for small values of x. And Implement an approximate calculation of the result based on the Taylor series.
 
 ```{r, include=TRUE, echo=TRUE}
 
@@ -541,7 +536,7 @@ print(paste("Execution time:", execution_time_chol))
 ###################################################
 QR <- qr(X)
 qr_betas <- backsolve(qr.R(QR), crossprod(qr.Q(QR), Y))
-solve(QR, Y)
+solve_r_builtin <- qr.solve(QR, Y)
 
 
 start_time <- Sys.time()
@@ -563,7 +558,8 @@ Answer: LM FIT requires the longest execution time, followed by Cholesky decompo
 seems to vary as if the algorithm used for solving all methods will depend on a random parameter.
 
 
-## Determine the class of the matrix mm and the vector y. Inspect the structure of mm and explain how the data is stored.
+## Determine the class of the matrix mm and the vector y. Inspect the structure of mm and explain how the data is stored. ## Determine the sparsity level of the matrix, i.e., the proportion of non-zero entries in the matrix. Also determine an estimate of the memory being used by mm and as.matrix(mm) in MB (see ?object.size).
+
 
 
 ```{r, include=TRUE, echo=TRUE}
@@ -585,6 +581,12 @@ object.size(X_sparse_matrix)
 class(KNex$mm)
 class(X)
 
+```
+
+## Use QR decomposition and the Cholesky decomposition to solve the least squares problem using the sparse matrix. Compare the solutions and the timings.
+
+
+```{r, include=TRUE, echo=TRUE}
 # When storing the matrix as a "Matrix" object it requires more bits. (Almost 100 times more)
 # Computing the sparsity (count(0 entries in the matrix)/nXm)
 
