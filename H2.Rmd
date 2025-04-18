@@ -8,12 +8,142 @@ date: "`r Sys.Date()`"
 ---
 
 
-# Exercise 5
 
-```{r}
+
+# Exercise 4
+
+It is assumed that the lifetime of light bulbs follows an exponential distribution with parameter $\lambda$. To estimate
+$\lambda$, n light bulbs were tested until they all failed. Their failure times were recorded as $u_{1}, . . . , u_{n}$. In a separate
+experiment, m bulbs were tested, but the individual failure times were not recorded. Only the number of bulbs, r,
+that had failed at time t was recorded. The missing data are the failure times of the bulbs in the second experiment,
+$v_{1}, . . . , v_{m}$.
+
+## Determine the complete-data log-likelihood.
+
+The complete data log-likelihood is defined as follows:
+
+\[
+x \sim \text{Exp}(\lambda), \quad f(x) = \lambda e^{-\lambda x}
+\]
+\[
+\text{Likelihood}(x) = \prod_{i=1}^{n+m} \lambda e^{-\lambda x_{i}}
+\]
+\[
+\text{Log-Likelihood}(x) = \sum_{i=1}^{n+m} \log(\lambda e^{-\lambda x_{i}}) = \sum_{i=1}^{n+m} \log(\lambda) - \lambda x_{i}
+\]
+
+## Determine the conditional means
+
+
+
+$$ E[x \mid x \leq t, \lambda_{0}] = \int_{x = 0}^{t} f(x) \cdot x \, dx = \int_{x = 0}^{x = t} (\lambda e^{-\lambda x}) \cdot x \, dx $$
+$$ E[x \mid x \leq t, \lambda_{0}] = \frac{e^{-\lambda x} (\lambda x + 1)}{\lambda} \Big|_0^t $$
+$$ E[x \mid x \leq t, \lambda_{0}] = \frac{e^{-\lambda t} (\lambda t + 1) - 1}{\lambda} $$
+
+Given that $E[x \mid x = t] = t \cdot Pois(k = r)$, the latter is the probability of a $Pois(\lambda)$ with the same 
+parameter as the exponential distribution. Such probability is given by:
+
+$$ E[x \mid x = t] = t \cdot P(x = r) = \frac{\lambda^{r} e^{-\lambda}}{r!} $$
+
+
+$$ E[x \mid x > t, \lambda_{0}] = E[x \mid x \geq t, \lambda_{0}] - E[x \mid x = t, \lambda_{0}] = \frac{e^{-\lambda x} (\lambda x + 1)}{\lambda} \Big|_t^\infty - E[x \mid x = t] $$
+$$ E[x \mid x > t, \lambda_{0}] = -\frac{e^{-\lambda t} (\lambda t + 1)}{\lambda} - \frac{\lambda^{r} e^{-\lambda}}{r!} $$
+
+Let us formulate the latent variable as $Y = I( x \leq t)$, so that 
+when we take the expectation over the complete log-likelihood with 
+respect to the conditional distribution of $y$ given the observed data, and paramenter we have:
+
+$$ E[x | Y = y] =  y \left(\frac{e^{-\lambda t} (\lambda t + 1) - 1}{\lambda}\right) + (1 - y)\left(\frac{e^{-\lambda t} (\lambda t + 1)}{\lambda} - \frac{\lambda^{r} e^{-\lambda}}{r!}\right)  $$
+
+
+## Determine the E- and M-step of the EM algorithm.
+
+The EM algorithm consists of two steps: the E-step and the M-step.
+
+The E-step computes the expected value of the complete-data log-likelihood given the observed data and the current estimate of the parameters. The M-step maximizes this expected value with respect to the parameters.
+
+In the E-Step we compute the value of $$ \lambda $$ based on its previous value then we update in the  M-step.
+$$ E[\text{Log-Likelihood}(x)|Y = y,\lambda_{k}] =  N\log(\lambda_{k}) - \lambda_{k} \sum_{i=1}^{n+m}E[x_{i}| Y = y,\lambda_{k}] $$
+
+M step:
+
+The value $\lambda_{k+1}$ that maximizes the expected log-likelihood is given by:
+
+$$ \lambda_{k+1} = \frac{N}{\sum_{i=1}^{n+m}E[x_{i}|Y = y,\lambda_{k}]} $$
+
+This can be better writen as :
+
+$$ $$
+
+```{r, echo=TRUE}
+n <- 100; m <- 20; t <- 3
+set.seed(1234)
+
+# We know from the simulation that lambda is equal to 2
+
+u <- rexp(n, 2) 
+v <- rexp(m, 2)
+r <- sum(v <= t) # All the values are observed
+
+# We know only the values of u
+
+# Let us write the log-likelihood function
+
+loglike <- function(lambda, u) {
+    logl <- n * log(lambda) - lambda * sum(u)
+    return(-logl) # Negate to minimize
+}
+
+lambda_opt <- optimize(loglike, interval = c(0.1, 10), u = u)$minimum
+lambda_opt_2 <- n/sum(u)
+
+# Given the interval and the observations 
+
+# E-Step: (We will use the value obtained from the optimization)
+e_step <- function(lambda, u, t, r) {
+  e_x <- numeric(length(u))
+  for (i in 1:length(u)) {
+    if (u[i] <= t) {
+      e_x[i] <-  ((exp(-lambda * t) * (lambda * t + 1) - 1) / lambda) 
+    } else {
+      e_x[i] <- -((exp(-lambda * t) * (lambda * t + 1)) / lambda) - 
+                  (lambda^r * (exp(-lambda)) / factorial(r))
+    }
+  }
+  return(sum(e_x))
+}
+
+e_step(lambda_opt, u, t, r)
+
+# M-Step: (We will use the value obtained from the optimization)
+
+m_step <- function(e_x) {
+  lambda_new <- n / e_x
+  return(lambda_new)
+}
+
+# E-M algorithm
+lambda <- lambda_opt_2 # Initial guess for lambda
+
+for (i in 1:100) {
+  e_x <- e_step(lambda, u, t, r)
+  lambda <- m_step(e_x)
+  print(lambda)
+}
+
 
 
 ```
+
+
+
+# Exercise 5
+
+A multivariate numeric data set with missing values is given. We assume that the data come from a multivariate
+normal distribution and we want to estimate the parameters using maximum-likelihood estimation with a general
+purpose optimizer.
+
+## Specify the log-likelihood for a single observation $y_{i}$. Assume for $y_{i}$ that the first $d_{1}$ variables are observed and that the next $d_{2}$ variables are missing, i.e.,
 
 
 
