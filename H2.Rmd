@@ -7,6 +7,115 @@ output:
 date: "`r Sys.Date()`"
 ---
 
+---
+title: "**Homework 2**"
+author: "Santiago Ruiz, Nikita Karetnikov"
+output:
+  pdf_document:
+    number_sections: true
+date: "`r Sys.Date()`"
+---
+
+# Exercise 2
+
+In this exercise, we assume lifetimes of light bulbs follow an exponential distribution with parameter \(\lambda\).  Data arise from two experiments:
+
+1. **Complete data**: failure times \(u_1, \dots, u_n\) recorded exactly.
+2. **Censored data**: out of \(m\) bulbs observed until time \(t\), only the total count \(r\) failures by \(t\) are recorded; individual failure times \(v_j\) are missing.
+
+## (i) Log‑likelihood
+
+The combined log‑likelihood (up to additive constants) is:
+
+\[
+\ell(\lambda; u, r, t, m)
+= n\log\lambda - \lambda \sum_{i=1}^n u_i
+  + r\log\bigl(1 - e^{-\lambda t}\bigr)
+  + (m - r)(-\lambda t).
+\]
+
+## (ii) R function for the log‑likelihood
+
+```{r}
+loglik <- function(lambda, u, r, t, m) {
+  if (lambda <= 0) return(-Inf)
+  term1 <- length(u)*log(lambda) - lambda * sum(u)
+  term2 <- r * log(1 - exp(-lambda * t)) + (m - r) * (-lambda * t)
+  term1 + term2
+}
+```
+
+## (iii) Maximum‐likelihood estimation via `optim()`
+
+We generate artificial data and maximize \(\ell(\lambda)\):
+
+```{r}
+set.seed(1234)
+n <- 100; m <- 20; t <- 3
+u <- rexp(n, 2)
+v <- rexp(m, 2)
+r <- sum(v <= t)
+
+# Negative log‑likelihood for minimization:
+nll <- function(lam) -loglik(lam, u = u, r = r, t = t, m = m)
+opt1 <- optim(par = 1, fn = nll,
+              method = "Brent", lower = 0.0001, upper = 10)
+mle_lambda <- opt1$par
+cat("MLE via optim(): lambda =", mle_lambda, "\n")
+```
+
+# Exercise 3
+
+We implement the golden‐section search to maximize a univariate function.
+
+## (i) Golden‐section search function
+
+```{r}
+GoldenSection <- function(f, interval, ..., tol = 1e-6, iter.max = 100) {
+  a <- interval[1]; b <- interval[2]
+  gr <- (sqrt(5) + 1) / 2
+  c <- b - (b - a) / gr
+  d <- a + (b - a) / gr
+  fc <- f(c, ...); fd <- f(d, ...)
+  for (i in seq_len(iter.max)) {
+    if (abs(b - a) < tol) break
+    if (fc > fd) {
+      b <- d; d <- c; fd <- fc
+      c <- b - (b - a) / gr; fc <- f(c, ...)
+    } else {
+      a <- c; c <- d; fc <- fd
+      d <- a + (b - a) / gr; fd <- f(d, ...)
+    }
+  }
+  x_opt <- (a + b) / 2
+  list(estimate = x_opt, value = f(x_opt, ...))
+}
+```
+
+## (ii) Application to the light‑bulb log‑likelihood
+
+```{r}
+# Maximize the log‑likelihood from Exercise 2:
+gs_res <- GoldenSection(
+  function(lam) loglik(lam, u = u, r = r, t = t, m = m),
+  interval = c(0.001, 10), tol = 1e-8
+)
+cat("GoldenSection: lambda =", gs_res$estimate,
+    " value =", gs_res$value, "\n")
+
+# Compare to built-in optimize():
+opt_res <- optimize(
+  function(lam) loglik(lam, u = u, r = r, t = t, m = m),
+  interval = c(0.001, 10), maximum = TRUE
+)
+cat("optimize():    lambda =", opt_res$maximum,
+    " value =", opt_res$objective, "\n")
+```
+
+Both methods yield essentially the same MLE for \(\lambda\).  The numerical agreement confirms our golden‐section implementation.
+
+
+
 
 # Exercise 5
 
