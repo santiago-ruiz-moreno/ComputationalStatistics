@@ -1,5 +1,5 @@
 ---
-title: "**Homework 1**"
+title: "**Homework 2**"
 author: "Santiago Ruiz, Nikita Karetnikov, Felix Ubl "
 output:
   pdf_document:
@@ -7,14 +7,7 @@ output:
 date: "`r Sys.Date()`"
 ---
 
----
-title: "**Homework 2**"
-author: "Santiago Ruiz, Nikita Karetnikov"
-output:
-  pdf_document:
-    number_sections: true
-date: "`r Sys.Date()`"
----
+
 
 ## Exercise 1
 
