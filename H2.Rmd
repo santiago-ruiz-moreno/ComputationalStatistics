@@ -16,6 +16,85 @@ output:
 date: "`r Sys.Date()`"
 ---
 
+## Exercise 1
+
+In this exercise we need to write a function that implements Newton-Raphson method.
+Let us first  copy the material from the slides about this method:
+
+Let \( f : \mathcal{I} \to \mathbb{R} \) be a convex, once continuously differentiable function with at least one root in \( \mathcal{I} \). Then the sequence converges to a root.
+
+
+\[
+x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}
+\]
+
+
+Good! As we understand, to find the root we would need to implement the cycle in R,
+where we will use the function and its derivative.
+
+The function is given in the task:
+
+\[
+f(x) = x^3 - 4x^2 + 18x - 115.
+\]
+Let us implement it:
+```{r}
+
+target_function <- function(x){
+  y = x^3 - 4*x^2 + 18*x - 115
+
+  return(y)    
+}
+
+```
+
+The derivative of the function is:
+
+\[
+f'(x) = 3x^2 - 8x + 18.
+\]
+
+Let us implement it:
+
+```{r}
+
+derivative <- function(x){
+  y = 3*x^2 - 8*x + 18
+
+  return(y)    
+}
+```
+
+
+Now let us implement the cycle.
+
+
+```{r}
+x_0 = 10 # initial guess
+
+x_n = x_0
+x_n_prev = 0
+
+epsilon <- .Machine$double.eps
+while ( abs(x_n_prev-x_n)>epsilon){
+  x_n_prev = x_n
+  x_n = x_n_prev -  target_function(x_n_prev)/derivative(x_n_prev)
+}
+
+root = x_n
+print(root)
+```
+Let us verify that the computed value is indeed a root of the function
+by evaluating \( f(x_n) \) and checking whether
+it is equal to zero (within numerical precision):
+
+
+```{r}
+target_function(root) == 0
+```
+Looks very good!
+
+
 # Exercise 2
 
 In this exercise, we assume lifetimes of light bulbs follow an exponential distribution with parameter \(\lambda\).  Data arise from two experiments:
