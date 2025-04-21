@@ -1,0 +1,329 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Homework 1},
+  pdfauthor={Santiago Ruiz, Nikita Karetnikov, Felix Ubl},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{\textbf{Homework 1}}
+\author{Santiago Ruiz, Nikita Karetnikov, Felix Ubl}
+\date{2025-04-22}
+
+\begin{document}
+\maketitle
+
+\section{Exercise 4}\label{exercise-4}
+
+It is assumed that the lifetime of light bulbs follows an exponential
+distribution with parameter \(\lambda\). To estimate \(\lambda\), n
+light bulbs were tested until they all failed. Their failure times were
+recorded as \(u_{1}, . . . , u_{n}\). In a separate experiment, m bulbs
+were tested, but the individual failure times were not recorded. Only
+the number of bulbs, r, that had failed at time t was recorded. The
+missing data are the failure times of the bulbs in the second
+experiment, \(v_{1}, . . . , v_{m}\).
+
+\subsection{Determine the complete-data
+log-likelihood.}\label{determine-the-complete-data-log-likelihood.}
+
+The complete data log-likelihood is defined as follows:
+
+\[
+x \sim \text{Exp}(\lambda), \quad f(x) = \lambda e^{-\lambda x}
+\] \[
+\text{Likelihood}(x) = \prod_{i=1}^{n+m} \lambda e^{-\lambda x_{i}}
+\] \[
+\text{Log-Likelihood}(x) = \sum_{i=1}^{n+m} \log(\lambda e^{-\lambda x_{i}}) = \sum_{i=1}^{n+m} \log(\lambda) - \lambda x_{i}
+\]
+
+\subsection{Determine the conditional
+means}\label{determine-the-conditional-means}
+
+By Bayes' rule, we have:
+
+\[
+P(x \mid y) = \frac{P(y, x)}{P(y)}
+\]
+
+Let \(f\) denote the density function of the exponential distribution.
+Then we have:
+
+\[
+P(X \leq t) = \frac{f(s)}{P(X \leq t)}
+\]
+
+The expression in the denominator is the cumulative distribution
+function (CDF) of the exponential distribution, which is given by:
+
+\[
+P(X \leq t) = 1 - e^{-\lambda t}
+\]
+
+The support of this new density is given by \([0, t]\), and the density
+function is:
+
+\[
+g(s) = \frac{\lambda e^{-\lambda s}}{1 - e^{-\lambda t}}
+\]
+
+Now, define the random variable \(Y = X + Nt\), where
+\(N = \max\{n \in \mathbb{N} : nt < X\}\). Then we have:
+
+\[
+P(nt < X) = 1 - P(X \leq nt) = (e^{-\lambda t})^n = P(X \leq t)^n
+\]
+
+In other words, \(N\) is a random variable that counts the number of
+failures before time \(t\). We can define such a probability in terms of
+success, meaning in terms of the probability of not having a failure
+until time \(t\), \(P(X > t) = 1 - e^{-\lambda t}\). Thus, \(N\) follows
+a geometric distribution with parameter \(p = P(X > t)\).
+
+Since \(X\) and \(Y\) are independent, we can write the joint
+distribution as:
+
+\[
+P(X, Y) = P(X)P(Y)
+\]
+
+\[
+P(N = n, Y \leq s) = P(nt < X \leq nt + s) = F(nt + s) - F(nt) = e^{-\lambda nt}(1 - e^{-\lambda s})
+\]
+
+If we multiply and divide by \(1 - e^{-\lambda t}\), we get the PDF of
+the random variable \(N\) times the cumulative distribution function of
+the random variable \(Y\):
+
+\[
+P(N = n, Y \leq s) = (e^{-\lambda t})^n (1 - e^{-\lambda t}) \frac{1 - e^{-\lambda s}}{1 - e^{-\lambda t}}
+\]
+
+Therefore, the CDF of \(Y\) is given by:
+
+\[
+G(s) = \frac{1 - e^{-\lambda s}}{1 - e^{-\lambda t}}
+\]
+
+Differentiating with respect to \(s\), we get the PDF of \(Y\):
+
+\[
+g(s) = \frac{\lambda e^{-\lambda s}}{1 - e^{-\lambda t}}
+\]
+
+Thus, \(Y\) is the random variable that counts the average value of the
+light bulbs that failed before time \(t\).
+
+\[
+E[Y] = E[X] + tE[N] = \frac{1}{\lambda} + \frac{e^{-\lambda t}}{1 - e^{-\lambda t}}
+\]
+
+Now, as for \(E[X| X > t] = t + \frac{1}{\lambda}\) because the
+exponential distribution is memoryless.
+
+\subsection{Determine the E- and M-step of the EM
+algorithm.}\label{determine-the-e--and-m-step-of-the-em-algorithm.}
+
+Let us define a variable \(Z\) that takes the value of
+\(Z = I(x \leq 1)\) and 0 otherwise. We can compute the expected value
+of \(Z\) as follows:
+
+\[E[X | Z = z] =   z\left( \frac{1}{\lambda} + \frac{e^{-\lambda t}}{1 - e^{-\lambda t}} \right) + (1-z)(t + \frac{1}{\lambda}) \]
+
+The EM algorithm consists of two steps: the E-step and the M-step.
+
+The E-step computes the expected value of the complete-data
+log-likelihood given the observed data and the current estimate of the
+parameters. The M-step maximizes this expected value with respect to the
+parameters.
+
+In the E-Step we compute the value of \[ \lambda \] based on its
+previous value then we update in the M-step.
+\[ E[\text{Log-Likelihood}(x)|Y = y,\lambda_{k}] =  N\log(\lambda_{k}) - \lambda_{k} \sum_{i=1}^{n+m}E[x_{i}| Y = y,\lambda_{k}] \]
+
+M step:
+
+The value \(\lambda_{k+1}\) that maximizes the expected log-likelihood
+is given by:
+
+\[ \lambda_{k+1} = \frac{N}{\sum_{i=1}^{n}u_{i} + \sum_{j=1}^{m}E[x_{i}|Z = z,\lambda_{k}]} \]
+
+This can be better writen as :
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n }\OtherTok{\textless{}{-}} \DecValTok{100}\NormalTok{; m }\OtherTok{\textless{}{-}} \DecValTok{20}\NormalTok{; t }\OtherTok{\textless{}{-}} \DecValTok{3}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{1234}\NormalTok{)}
+
+\CommentTok{\# True lambda}
+\NormalTok{lambda\_true }\OtherTok{\textless{}{-}} \DecValTok{2}
+
+\CommentTok{\# Generate observed and censored data}
+\NormalTok{u }\OtherTok{\textless{}{-}} \FunctionTok{rexp}\NormalTok{(n, lambda\_true)         }\CommentTok{\# fully observed failure times}
+\NormalTok{v }\OtherTok{\textless{}{-}} \FunctionTok{rexp}\NormalTok{(m, lambda\_true)         }\CommentTok{\# partially observed (we only know how many fail before t)}
+\NormalTok{r }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(v }\SpecialCharTok{\textless{}=}\NormalTok{ t)                  }\CommentTok{\# number of censored bulbs that failed before time t}
+
+\CommentTok{\# Initial estimate using only observed data}
+\CommentTok{\# lambda\_init \textless{}{-} n / sum(u)}
+\NormalTok{lambda\_init }\OtherTok{\textless{}{-}} \DecValTok{35}
+
+\CommentTok{\# Initialize vector for expected values}
+\NormalTok{v\_em }\OtherTok{\textless{}{-}} \FunctionTok{numeric}\NormalTok{(m)}
+
+\CommentTok{\# Expected value of truncated exponential (0 ≤ X ≤ t)}
+\NormalTok{expected\_truncated }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(lambda, t) \{}
+  \FunctionTok{return}\NormalTok{((}\DecValTok{1} \SpecialCharTok{/}\NormalTok{ lambda) }\SpecialCharTok{{-}}\NormalTok{ (t }\SpecialCharTok{*} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{lambda }\SpecialCharTok{*}\NormalTok{ t)) }\SpecialCharTok{/}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{lambda }\SpecialCharTok{*}\NormalTok{ t)))}
+\NormalTok{\}}
+
+\CommentTok{\# Expected value of exponential given X \textgreater{} t (memoryless property)}
+\NormalTok{expected\_censored }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(lambda, t) \{}
+  \FunctionTok{return}\NormalTok{(t }\SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{/}\NormalTok{ lambda))}
+\NormalTok{\}}
+
+\CommentTok{\# EM Algorithm}
+\NormalTok{lambda }\OtherTok{\textless{}{-}}\NormalTok{ lambda\_init}
+
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{10}\NormalTok{) \{}
+  \CommentTok{\# E{-}step: compute expected values for the m partially observed failure times}
+  \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{m) \{}
+    \ControlFlowTok{if}\NormalTok{ (j }\SpecialCharTok{\textless{}=}\NormalTok{ r) \{}
+\NormalTok{      v\_em[j] }\OtherTok{\textless{}{-}} \FunctionTok{expected\_truncated}\NormalTok{(lambda, t)  }\CommentTok{\# Expected failure time given v\_j ≤ t}
+\NormalTok{    \} }\ControlFlowTok{else}\NormalTok{ \{}
+\NormalTok{      v\_em[j] }\OtherTok{\textless{}{-}} \FunctionTok{expected\_censored}\NormalTok{(lambda, t)   }\CommentTok{\# Expected failure time given v\_j \textgreater{} t}
+\NormalTok{    \}}
+\NormalTok{  \}}
+
+  \CommentTok{\# M{-}step: update lambda using complete expected data}
+\NormalTok{  lambda }\OtherTok{\textless{}{-}}\NormalTok{ (n }\SpecialCharTok{+}\NormalTok{ m) }\SpecialCharTok{/}\NormalTok{ (}\FunctionTok{sum}\NormalTok{(u) }\SpecialCharTok{+} \FunctionTok{sum}\NormalTok{(v\_em))}
+
+  \FunctionTok{print}\NormalTok{(lambda)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2.429424
+## [1] 2.104733
+## [1] 2.061269
+## [1] 2.054733
+## [1] 2.053734
+## [1] 2.053581
+## [1] 2.053558
+## [1] 2.053554
+## [1] 2.053554
+## [1] 2.053554
+\end{verbatim}
+
+\section{Exercise 5}\label{exercise-5}
+
+A multivariate numeric data set with missing values is given. We assume
+that the data come from a multivariate normal distribution and we want
+to estimate the parameters using maximum-likelihood estimation with a
+general purpose optimizer.
+
+\subsection{\texorpdfstring{Specify the log-likelihood for a single
+observation \(y_{i}\). Assume for \(y_{i}\) that the first \(d_{1}\)
+variables are observed and that the next \(d_{2}\) variables are
+missing,
+i.e.,}{Specify the log-likelihood for a single observation y\_\{i\}. Assume for y\_\{i\} that the first d\_\{1\} variables are observed and that the next d\_\{2\} variables are missing, i.e.,}}\label{specify-the-log-likelihood-for-a-single-observation-y_i.-assume-for-y_i-that-the-first-d_1-variables-are-observed-and-that-the-next-d_2-variables-are-missing-i.e.}
+
+\end{document}
