@@ -3,7 +3,7 @@ title: "**Homework 2**"
 author: "Santiago Ruiz, Nikita Karetnikov, Felix Ubl "
 output:
   pdf_document:
-    number_sections: true
+    latex_engine: xelatex 
 date: "`r Sys.Date()`"
 ---
 
@@ -357,7 +357,7 @@ for (i in 1:10) {
 }
 ```
 
-## Exercise 1
+# Exercise 5
 
 In this exercise we need to write a function that implements Newton-Raphson method.
 Let us first  copy the material from the slides about this method:
@@ -411,16 +411,27 @@ purpose optimizer.
 ## Implement a function loglik which given the data and the parameter values μ and Σ returns the log-likelihood values.
 ## The parameters need to be vectorized for the general purpose optimizer. Suggest a suitable vectorizing scheme.
 
-```{r, echo=TRUE}
+```{r}
+library(mvtnorm)
+
 loglik <- function(y, mu, sigma) {
   d <- ncol(y)
   n <- nrow(y)
   log_likelihood <- numeric(n)
-  
+
+  # Check for valid sigma
+  if (any(is.na(sigma)) || det(sigma) <= 0 || any(!is.finite(sigma))) {
+    return(NA)
+  }
+
   for (i in 1:n) {
     y_i <- y[i, ]
-    log_likelihood[i] <- -0.5 * (d * log(2 * pi) + log(det(sigma)) +
-                                 t(y_i - mu) %*% solve(sigma) %*% (y_i - mu))
+    diff <- y_i - mu
+    ll <- tryCatch({
+      -0.5 * (d * log(2 * pi) + log(det(sigma)) +
+              t(diff) %*% solve(sigma) %*% diff)
+    }, error = function(e) NA)
+    log_likelihood[i] <- ll
   }
   return(sum(log_likelihood))
 }
@@ -435,7 +446,7 @@ neg_loglik_wrapper <- function(params, y, d) {
   L[lower.tri(L, diag = TRUE)] <- L_vals
   
   # sigma = L %*% t(L), to ensure positive-definite
-  sigma <- L %*% t(L)
+  sigma <- L %*% t(L) + diag(1e-6, d)
   
   # Return negative log-likelihood (since optim minimizes)
   return(-loglik(y, mu, sigma))
@@ -452,19 +463,21 @@ true_sigma <- matrix(c(1, 0.5, 0.3,
 y <- rmvnorm(n, mean = true_mu, sigma = true_sigma)
 
 # Initial guesses
-init_mu <- rep(0, d)
-init_L_vals <- rep(0.1, d * (d + 1) / 2) # lower triangle of Cholesky
+init_mu <- rep(3, d)
+init_L <- diag(1, d)
+init_L_vals <- init_L[lower.tri(init_L, diag = TRUE)]
 init_params <- c(init_mu, init_L_vals)
 
 # Optimize
-result <- optim(init_params, neg_loglik_wrapper, y = y, d = d, method = "BFGS")
+result <- optim(init_params, neg_loglik_wrapper, y = y, d = d, method = "BFGS",
+                control = list(maxit = 1000, reltol = 1e-8))
 
 # Extract optimized mu and sigma
 opt_mu <- result$par[1:d]
-opt_L_vals <- result$par[(d + 1):length(result$par)]
-L <- matrix(0, d, d)
-L[lower.tri(L, diag = TRUE)] <- opt_L_vals
-opt_sigma <- L %*% t(L)
+opt_l_vals <- result$par[(d + 1):length(result$par)]
+lower_triangle_matrix <- matrix(0, d, d)
+lower_triangle_matrix[lower.tri(lower_triangle_matrix, diag = TRUE)] <- opt_l_vals
+opt_sigma <- lower_triangle_matrix %*% t(lower_triangle_matrix)
 
 # Show result
 cat("Optimized mu:\n")
@@ -477,81 +490,114 @@ print(opt_sigma)
 
 ## Use optim to maximize the log-likelihood on an artificial data set of size 200 drawn from a 3-dimensional multivariate normal distribution with mean zero and variance-covariance matrix
 
-```{r, echo=TRUE}
+```{r}
+library(mvtnorm)
 
-library(mvrnorm)
-# Fitting a multivariate normal distribution to the data without missing values
-# Generate another sample data
+# Generate sample data with missing values
 set.seed(1234)
 n <- 200
 d <- 3
 true_mu <- c(0, 0, 0)
 true_sigma <- matrix(c(1, 0.5, 0.5,
-             0.5, 1, 0.5,
-             0.5, 0.5, 1), nrow = d)
+                       0.5, 1, 0.5,
+                       0.5, 0.5, 1), nrow = d)
 y <- rmvnorm(n, mean = true_mu, sigma = true_sigma)
 
-# Assign 30% missing values to each variable
+# Assign 30% missing values randomly
 missing_indices <- matrix(runif(n * d) < 0.3, nrow = n, ncol = d)
 y[missing_indices] <- NA
 
+# Log-likelihood function
+loglik <- function(y, mu, sigma) {
+  d <- ncol(y)
+  n <- nrow(y)
+  log_likelihood <- numeric(n)
 
+  if (any(!is.finite(mu)) || any(!is.finite(sigma)) || det(sigma) <= 0) {
+    return(NA)
+  }
+
+  for (i in 1:n) {
+    y_i <- y[i, ]
+    if (any(is.na(y_i))) next
+    diff <- y_i - mu
+    ll <- tryCatch({
+      -0.5 * (d * log(2 * pi) + log(det(sigma)) +
+                t(diff) %*% solve(sigma) %*% diff)
+    }, error = function(e) NA)
+    log_likelihood[i] <- ll
+  }
+  return(sum(log_likelihood, na.rm = TRUE))
+}
+
+# Imputation function
 impute_missing <- function(y, mu, sigma) {
   y_imputed <- y
   for (i in 1:nrow(y)) {
     obs_idx <- !is.na(y[i, ])
     miss_idx <- is.na(y[i, ])
-    
-    # Only proceed if there are both observed and missing values
     if (any(miss_idx) && any(obs_idx)) {
       mu_obs <- mu[obs_idx]
       mu_miss <- mu[miss_idx]
       sigma_oo <- sigma[obs_idx, obs_idx]
       sigma_mo <- sigma[miss_idx, obs_idx]
       y_obs <- y[i, obs_idx]
-      
-      # Try-catch to handle any weird numerical cases
+
       y_miss_hat <- tryCatch({
         mu_miss + sigma_mo %*% solve(sigma_oo) %*% (y_obs - mu_obs)
-      }, error = function(e) {
-        rep(NA, length(miss_idx))  # if error, don't impute
-      })
-      
+      }, error = function(e) rep(NA, sum(miss_idx)))
+
       y_imputed[i, miss_idx] <- y_miss_hat
     }
   }
   return(y_imputed)
 }
 
-# EM algorithm
+# Wrapper for optimization
+neg_loglik_wrapper <- function(params, y, d) {
+  mu <- params[1:d]
+  L_vals <- params[(d + 1):length(params)]
+  L <- matrix(0, d, d)
+  L[lower.tri(L, diag = TRUE)] <- L_vals
+  sigma <- L %*% t(L) + diag(1e-6, d)  # regularization for stability
+  return(-loglik(y, mu, sigma))
+}
 
-for (iter in 1:20) {
+# Initialization
+init_mu <- colMeans(y, na.rm = TRUE)
+init_L <- diag(1, d)
+init_L_vals <- init_L[lower.tri(init_L, diag = TRUE)]
+init_params <- c(init_mu, init_L_vals)
+
+# Initial values for opt_mu and opt_sigma
+opt_mu <- init_mu
+opt_sigma <- init_L %*% t(init_L)
+
+# EM Algorithm
+for (iter in 1:5) {
   cat("\n--- Iteration", iter, "---\n")
-  
-  # E-step: Impute missing values
+
+  # E-step
   y_imputed <- impute_missing(y, opt_mu, opt_sigma)
-  
-  # M-step: Optimize log-likelihood on imputed data
-  result <- optim(init_params, neg_loglik_wrapper, y = y_imputed, d = d, method = "BFGS")
-  
-  # Extract parameters
+
+  # M-step
+  result <- optim(init_params, neg_loglik_wrapper, y = y_imputed, d = d, method = "BFGS",
+                  control = list(maxit = 1000, reltol = 1e-8))
+
+  # Update parameters
   opt_mu <- result$par[1:d]
   opt_L_vals <- result$par[(d + 1):length(result$par)]
   L <- matrix(0, d, d)
   L[lower.tri(L, diag = TRUE)] <- opt_L_vals
   opt_sigma <- L %*% t(L)
-  
-  # Update initial params for next loop
+
   init_params <- result$par
-  
-  # Print step results
+
+  # Output
   cat("mu:\n"); print(opt_mu)
   cat("sigma:\n"); print(opt_sigma)
-  cat("log-likelihood (complete cases):", loglik(y, opt_mu, opt_sigma), "\n")
+  cat("log-likelihood:", loglik(y_imputed, opt_mu, opt_sigma), "\n")
 }
-
-
-
 
 ```
 
