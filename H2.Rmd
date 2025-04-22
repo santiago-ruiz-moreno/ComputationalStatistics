@@ -362,48 +362,6 @@ for (i in 1:10) {
 
 # Exercise 5
 
-In this exercise we need to write a function that implements Newton-Raphson method.
-Let us first  copy the material from the slides about this method:
-
-Let \( f : \mathcal{I} \to \mathbb{R} \) be a convex, once continuously differentiable function with at least one root in \( \mathcal{I} \). Then the sequence converges to a root.
-
-
-\[
-x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}
-\]
-
-
-Good! As we understand, to find the root we would need to implement the cycle in R,
-where we will use the function and its derivative.
-
-The function is given in the task:
-
-\[
-f(x) = x^3 - 4x^2 + 18x - 115.
-\]
-Let us implement it:
-```{r}
-
-target_function <- function(x){
-  y = x^3 - 4*x^2 + 18*x - 115
-
-  return(y)    
-}
-
-```
-
-The derivative of the function is:
-
-\[
-f'(x) = 3x^2 - 8x + 18.
-\]
-
-Let us implement it:
-
-A multivariate numeric data set with missing values is given. We assume that the data come from a multivariate
-normal distribution and we want to estimate the parameters using maximum-likelihood estimation with a general
-purpose optimizer.
-
 ## i) Specify the log-likelihood for a single observation $y_{i}$. Assume for $y_{i}$ that the first $d_{1}$ variables are observed and that the next $d_{2}$ variables are missing, i.e.,
 
 \[
