@@ -199,7 +199,7 @@ experiment, m bulbs were tested, but the individual failure times were not recor
 that had failed at time t was recorded. The missing data are the failure times of the bulbs in the second experiment,
 $v_{1}, . . . , v_{m}$.
 
-## Determine the complete-data log-likelihood.
+## i) Determine the complete-data log-likelihood.
 
 The complete data log-likelihood is defined as follows:
 
@@ -213,7 +213,7 @@ x \sim \text{Exp}(\lambda), \quad f(x) = \lambda e^{-\lambda x}
 \text{Log-Likelihood}(x) = \sum_{i=1}^{n+m} \log(\lambda e^{-\lambda x_{i}}) = \sum_{i=1}^{n+m} \log(\lambda) - \lambda x_{i}
 \]
 
-## Determine the conditional means
+## ii) Determine the conditional means
 By Bayes' rule, we have:
 
 \[
@@ -284,7 +284,7 @@ E[Y] = E[X] + tE[N] = \frac{1}{\lambda} + \frac{e^{-\lambda t}}{1 - e^{-\lambda 
 Now, as for $E[X| X > t] = t + \frac{1}{\lambda}$ because the exponential distribution is memoryless. 
 
 
-## Determine the E- and M-step of the EM algorithm.
+## iii) Determine the E- and M-step of the EM algorithm.
 
 Let us define a variable $Z$ that takes
 the value of $Z = I(x \leq 1)$ and 0 otherwise. We can compute the expected value of $Z$ as follows:
@@ -296,16 +296,19 @@ The EM algorithm consists of two steps: the E-step and the M-step.
 
 The E-step computes the expected value of the complete-data log-likelihood given the observed data and the current estimate of the parameters. The M-step maximizes this expected value with respect to the parameters.
 
-In the E-Step we compute the value of $$ \lambda $$ based on its previous value then we update in the  M-step.
-$$ E[\text{Log-Likelihood}(x)|Y = y,\lambda_{k}] =  N\log(\lambda_{k}) - \lambda_{k} \sum_{i=1}^{n+m}E[x_{i}| Y = y,\lambda_{k}] $$
+In the E-Step we compute the value of $$ \lambda $$ based on its previous value then we update in the  M-step. Namely, in the
+E-step we compute the expectation below given the current value of $$ \lambda $$:
 
-M step:
+$$ E[\text{Log-Likelihood}(x)|Z = z,\lambda_{k}, x_{i}] =  N\log(\lambda_{k}) - \lambda_{k} \sum_{i=1}^{n+m}E[x_{i}| Y = y,\lambda_{k}] $$
+
+In the M step, we use the values provided by remplacing $v_{i}$ with its expectation, and maximize to finf the new value of $$ \lambda_{k+1} $$:
 
 The value $\lambda_{k+1}$ that maximizes the expected log-likelihood is given by:
 
 $$ \lambda_{k+1} = \frac{N}{\sum_{i=1}^{n}u_{i} + \sum_{j=1}^{m}E[x_{i}|Z = z,\lambda_{k}]} $$
 
-This can be better writen as :
+
+## iv) Implement the EM algorithm and apply it to artificial data generated with:
 
 ```{r,  echo=TRUE}
 
@@ -401,15 +404,15 @@ A multivariate numeric data set with missing values is given. We assume that the
 normal distribution and we want to estimate the parameters using maximum-likelihood estimation with a general
 purpose optimizer.
 
-## Specify the log-likelihood for a single observation $y_{i}$. Assume for $y_{i}$ that the first $d_{1}$ variables are observed and that the next $d_{2}$ variables are missing, i.e.,
+## i) Specify the log-likelihood for a single observation $y_{i}$. Assume for $y_{i}$ that the first $d_{1}$ variables are observed and that the next $d_{2}$ variables are missing, i.e.,
 
 \[
 \ell(\mathbf{y}_i; \boldsymbol{\mu}, \boldsymbol{\Sigma}) = 
 -\frac{1}{2} \left[ d \log(2\pi) + \log|\boldsymbol{\Sigma}| + (\mathbf{y}_i - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{y}_i - \boldsymbol{\mu}) \right]
 \]
 
-## Implement a function loglik which given the data and the parameter values μ and Σ returns the log-likelihood values.
-## The parameters need to be vectorized for the general purpose optimizer. Suggest a suitable vectorizing scheme.
+## ii) Implement a function loglik which given the data and the parameter values μ and Σ returns the log-likelihood values.
+## iii) The parameters need to be vectorized for the general purpose optimizer. Suggest a suitable vectorizing scheme.
 
 ```{r}
 library(mvtnorm)
@@ -488,7 +491,7 @@ print(opt_sigma)
 
 ```
 
-## Use optim to maximize the log-likelihood on an artificial data set of size 200 drawn from a 3-dimensional multivariate normal distribution with mean zero and variance-covariance matrix
+## iv) Use optim to maximize the log-likelihood on an artificial data set of size 200 drawn from a 3-dimensional multivariate normal distribution with mean zero and variance-covariance matrix
 
 ```{r}
 library(mvtnorm)
