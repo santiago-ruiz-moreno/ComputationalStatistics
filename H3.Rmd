@@ -7,6 +7,198 @@ output:
 date: "`r Sys.Date()`"
 ---
 
+## Exersice 1
+
+In this exercise we are asked to write a function for mixed preuso-random
+number generator, using this formula:
+
+\[
+x_{n+1} = (a x_n + b) \texttt{\%\%}   M, \quad y_{n+1} = \frac{x_{n+1}}{M}
+\]
+
+Okay let us implement it in R:
+
+```{r}
+
+PRNG_generator_1 <- function(a,b,M, seed = 23){
+  
+  n <- 10000
+  
+  x <- rep(0, n)
+  y <- rep(0, n)
+  
+  x[1] <- seed
+ 
+  for (i in 2:n) {
+    
+    x[i] <- (a * x[i - 1] + b) %% M
+    y[i] <- x[i] / M
+  
+    }
+
+  return( (y)[-1])
+}
+
+
+```
+Now let us check it for different values of A:
+```{r}
+
+y <- PRNG_generator_1(a = 205, b = 29573, M = 139968)
+hist(y, breaks = 50, main = "Histogram of Mixed PRNG with a = 205", xlab = "y")
+
+y <- PRNG_generator_1(a = 204, b = 29573, M = 139968)
+hist(y, breaks = 50, main = "Histogram of Mixed PRNG with a = 204", xlab = "y")
+
+```
+
+We can see that for $a = 205$, our generator performs well — the distribution looks close to uniform. But in the case of $a = 204$, the generator almost constantly produces the value `0.6393533`. So basically, it loses its randomness.
+
+After doing some research online, we found that this happens because it violates the conditions of [Hull and Dobell's theorem](https://www.howardrudd.net/mathematics/hull-and-dobells-first-theorem/), which are required for a full-period linear congruential generator (our mixed pseudo-random number generator is an example of this type).
+
+
+
+## Exersice 2
+
+In this exercise we are asked o generate standard normal pseudorandom numbers
+using the rejection method.
+
+
+We use the general formula for the acceptance probability in rejection sampling:
+
+$$
+\alpha(Y) = \frac{1}{M} \cdot \frac{f_X(Y)}{f_Y(Y)}.
+$$
+where \( f_X(Y) = \frac{1}{\sqrt{2\pi}} e^{-Y^2 / 2} \)  - is the PDF of the standard normal distribution, and
+\( f_Y(Y) = e^{-Y} \) — is the PDF of the Exponential(1) distribution. Substituting these into the formula gives:
+
+$$
+\alpha(Y) = \frac{1}{M} \cdot \frac{\frac{1}{\sqrt{2\pi}} e^{-Y^2 / 2}}{e^{-Y}} = \frac{1}{M\sqrt{2\pi}} \cdot e^{-(Y^2 / 2 - Y)}.
+$$
+Simplifying the exponent:
+
+$$
+Y^2 / 2 - Y = \frac{(Y - 1)^2}{2} - \frac{1}{2},
+$$
+
+so the acceptance probability becomes:
+
+$$
+\alpha(Y) = \frac{e^{1/2}}{M\sqrt{2\pi}} \cdot \exp\left(-\frac{(Y - 1)^2}{2}\right).
+$$
+We ignore the constant factor \( \frac{e^{1/2}}{M\sqrt{2\pi}} \), because rejection sampling only depends on the relative acceptance probability. Hence we need to use:
+
+$$
+\alpha(Y) \propto \exp\left(-\frac{(Y - 1)^2}{2}\right).
+$$
+Now we can implement the rejection algorithm in R:
+
+```{r}
+
+rejection_sampling <- function(n) {
+  s <- numeric(n)
+  i <- 1
+  
+  while (i <= n) {
+    y <- rexp(1)  
+    u <- runif(1) 
+    
+    if (u <= exp(-((y - 1)^2) / 2)) {
+      sign <- ifelse(runif(1) < 0.5, -1, 1)  
+      s[i] <- sign * y
+      i <- i + 1
+    }
+  }
+  
+  return(s)
+}
+
+```
+
+Now, let us to use our rejection sampling algorithm to generate standard normal
+distribution and plot it:
+
+```{r}
+
+
+hist(rejection_sampling(1000), probability = TRUE, breaks = 50, col = "lightblue",
+     main = "Standard Normal Distribution via Rejection Sampling", xlab = "x")
+curve(dnorm(x), col = "red", lwd = 2, add = TRUE)
+
+
+```
+Looks close enough to a standard normal distribution!
+
+
+## Exersice 3
+In this exercise we are asked to generate pseudorandom numbers
+from a truncated exponential distribution. To solve this exercise we need to know two things. First one is theory on
+inversion method. 
+
+Let us use a bit of theory from the
+slides. From slide 6–7, the inversion method works as follows:
+
+If \( X \) has CDF \( F_X(x) \), and \( U \sim \text{Uniform}(0, 1) \),
+
+then:
+\[
+X = F_X^{-1}(U)
+\]
+
+follows the desired distribution.
+
+The example on Slide 7 shows the exponential distribution:
+
+\[
+F(x; \lambda) = 1 - e^{-\lambda x} \quad \Rightarrow \quad F^{-1}(u) = -\frac{1}{\lambda} \log(1 - u)
+\]
+
+---
+ 
+Second thing we need to know is theory on truncated distribution. When the exponential distribution is truncated to the interval \([a, b]\), the CDF becomes:
+
+\[
+F_{\text{trunc}}(x) = \frac{F(x) - F(a)}{F(b) - F(a)} = \frac{e^{-\lambda a} - e^{-\lambda x}}{e^{-\lambda a} - e^{-\lambda b}}
+\]
+
+Setting \( F_{\text{trunc}}(x) = U \), and solving for \( x \), we obtain the inverse CDF:
+
+\[
+x = -\frac{1}{\lambda} \log\left( e^{-\lambda a} - U \cdot (e^{-\lambda a} - e^{-\lambda b}) \right)
+\]
+
+This is the formula we will use to generate samples.
+
+ 
+ We  implement it in R:
+
+
+```{r}
+
+truncated_exp <- function(n, lambda, a, b) {
+  u <- runif(n)
+  x <- -log(exp(-lambda * a) - u * (exp(-lambda * a) - exp(-lambda * b))) / lambda
+  return(x)
+}
+```
+
+and generate samples using it:
+
+```{r}
+
+samples <- truncated_exp(n = 10000,lambda = 1, a = 1, b = 2.5)
+
+hist(samples, probability = TRUE,  main = "Truncated Exponential [1, 2.5]", col = "lightblue", xlab = "x")
+
+curve(dexp(x, rate = 1) / (pexp(2.5, rate = 1) - pexp(1, rate = 1)),
+      from = 1, to = 2.5, col = "red", lwd = 2, add = TRUE)
+
+legend("topright", legend = c("Sampled", "True PDF"),
+       fill = c("lightblue", NA), border = c("white", NA),
+       lty = c(NA, 1), col = c(NA, "red"), lwd = 2)
+
+```
+Looks nice -- the histrogram of generated samples is close to true PDF.
 
 
 # Exercise 5
