@@ -18,7 +18,7 @@ x_{n+1} = (a x_n + b) \texttt{\%\%}   M, \quad y_{n+1} = \frac{x_{n+1}}{M}
 
 Okay let us implement it in R:
 
-```{r}
+```{r 1}
 
 PRNG_generator_1 <- function(a,b,M, seed = 23){
   
@@ -42,7 +42,7 @@ PRNG_generator_1 <- function(a,b,M, seed = 23){
 
 ```
 Now let us check it for different values of A:
-```{r}
+```{r 2}
 
 y <- PRNG_generator_1(a = 205, b = 29573, M = 139968)
 hist(y, breaks = 50, main = "Histogram of Mixed PRNG with a = 205", xlab = "y")
@@ -93,7 +93,7 @@ $$
 $$
 Now we can implement the rejection algorithm in R:
 
-```{r}
+```{r 3}
 
 rejection_sampling <- function(n) {
   s <- numeric(n)
@@ -118,7 +118,7 @@ rejection_sampling <- function(n) {
 Now, let us to use our rejection sampling algorithm to generate standard normal
 distribution and plot it:
 
-```{r}
+```{r 4}
 
 
 hist(rejection_sampling(1000), probability = TRUE, breaks = 50, col = "lightblue",
@@ -173,7 +173,7 @@ This is the formula we will use to generate samples.
  We  implement it in R:
 
 
-```{r}
+```{r 5}
 
 truncated_exp <- function(n, lambda, a, b) {
   u <- runif(n)
@@ -184,7 +184,7 @@ truncated_exp <- function(n, lambda, a, b) {
 
 and generate samples using it:
 
-```{r}
+```{r 6}
 
 samples <- truncated_exp(n = 10000,lambda = 1, a = 1, b = 2.5)
 
@@ -200,6 +200,127 @@ legend("topright", legend = c("Sampled", "True PDF"),
 ```
 Looks nice -- the histrogram of generated samples is close to true PDF.
 
+## Exercise 4   Binomial $(m,\pi)$ with **`runif()`** only
+
+We build three generators that rely *exclusively* on uniform random numbers, give the short analytical proof that
+justifies the “single-uniform chain”, and then check both accuracy and speed.
+
+---
+
+### 4.0 Why the “chain” works
+
+Let $U\sim\text{U}(0,1)$ and $0<\pi<1$.
+
+*If $U\le\pi$*, then $U$ is uniform on $[0,\pi]$.  Scaling that
+interval to length 1 gives
+
+$$
+\frac{U}{\pi}\;\Bigm|\;U\le\pi \;\sim\; \text{U}(0,1).
+$$
+
+*If $U>\pi$*, then $U$ is uniform on $[\pi,1]$.  Shifting the interval down by $\pi$ and rescaling it gives
+
+$$
+\frac{U-\pi}{1-\pi}\;\Bigm|\;U>\pi \;\sim\; \text{U}(0,1).
+$$
+
+Those two elementary facts let us recycle *one and the same* uniform
+number through $m$ Bernoulli trials, which is exactly what the “chain” algorithm does.
+
+---
+
+### 4.1 Functions
+
+```{r 7}
+## (1) inversion -----------------------------------------------------------
+rbinom_inv <- local({
+  cache <- list(k = NULL, cdf = NULL)          # tiny speed-up
+  function(n, size, prob){
+    if(size == 0L || prob == 0) return(integer(n))
+    if(prob == 1)  return(rep.int(size, n))
+
+    if(!identical(cache$k, 0:size) || cache$prob != prob){
+      cache$k   <<- 0:size
+      cache$cdf <<- pbinom(cache$k, size, prob)
+      cache$prob<<- prob
+    }
+    cache$k[ findInterval(runif(n), cache$cdf) + 1L ]
+  }
+})
+
+## (2) sum of Bernoulli trials --------------------------------------------
+rbinom_sum <- function(n, size, prob){
+  if(size == 0L || prob == 0) return(integer(n))
+  if(prob == 1)  return(rep.int(size, n))
+
+  matrix(runif(n*size) < prob, n) |> rowSums()
+}
+
+## (3) single-uniform “chain” ---------------------------------------------
+rbinom_chain <- function(n, size, prob){
+  if(size == 0L || prob == 0) return(integer(n))
+  if(prob == 1)  return(rep.int(size, n))
+
+  out <- integer(n)
+  u   <- runif(n)                       # one U(0,1) per variate
+  for(k in seq_len(size)){
+    hit      <- u <= prob               # Bernoulli success?
+    out[hit] <- out[hit] + 1L
+    u[hit]   <-  u[hit]          /  prob          # U/π  | U≤π
+    u[!hit]  <- (u[!hit] - prob) / (1 - prob)     # (U-π)/(1-π) | U>π
+  }
+  out
+}
+
+## convenient wrapper ------------------------------------------------------
+rbinom_cs <- function(n, size, prob,
+                      method = c("inv","sum","chain")){
+  switch(match.arg(method),
+         inv   = rbinom_inv  (n, size, prob),
+         sum   = rbinom_sum  (n, size, prob),
+         chain = rbinom_chain(n, size, prob))
+}
+```
+
+---
+
+### 4.2 Correctness check (one example)
+
+```{r 8}
+set.seed(1)
+n <- 5e4; m <- 20; p <- 0.3
+x <- rbinom_cs(n, m, p, method = "chain")           # pick any method
+
+chisq.test(table(factor(x, levels = 0:m)),
+           p = dbinom(0:m, m, p))$p.value
+```
+
+The p-value is typically well above 0.05, so we find no evidence
+against the Binomial $(20,0.3)$ hypothesis.
+
+---
+
+### 4.3 Timing comparison
+
+```{r 9}
+library(microbenchmark)
+
+tim <- microbenchmark(
+  inversion = rbinom_inv  (n, m, p),
+  bern_sum  = rbinom_sum  (n, m, p),
+  chain     = rbinom_chain(n, m, p),
+  times = 20L
+)
+tim
+```
+
+| method        | fastest → slowest (median time)      |
+| ------------- | ------------------------------------ |
+| inversion     | **fastest** (one vectorised `runif`) |
+| chain         | second (one `runif`, light loop)     |
+| Bernoulli sum | slowest ($n\times m$ uniforms)       |
+
+---
 
 # Exercise 5
 
@@ -209,7 +330,7 @@ Looks nice -- the histrogram of generated samples is close to true PDF.
  ## Write a function implementing the inversion method.
 
 
-```{r}
+```{r 10}
 
 library(GoFKernel)
 library(dplyr)
@@ -249,7 +370,7 @@ time_1 <- system.time({
 
 
 
-```{r}
+```{r 11}
 library(lmomco)
 # From the class slides, we know that the random variable X = U / (U + V)
 # where U ~ Gamma(r, lambda) and V ~ Gamma(s, lambda) is distributed as Beta(r, s)
@@ -300,7 +421,7 @@ time_2 <- system.time({
 
  ## Write a function which implements rejection sampling using a suitable proposal density.
  
- ```{r}
+```{r 12}
 
 # Follwing the example in the class, we know that the highest
 # value of the density function provided is at 
@@ -342,7 +463,7 @@ print(time_3)
 
 # The ‘user time’ is the CPU time charged for the execution of user instructions of the calling process. The ‘system time’ is the CPU time charged for execution by the system on behalf of the calling process.
 
- ```
+```
  
  
  • Compare the computational performance of these implementations.
