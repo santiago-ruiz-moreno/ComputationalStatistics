@@ -1,0 +1,215 @@
+---
+title: "**Homework 3**"
+author: "Santiago Ruiz, Nikita Karetnikov, Felix Ubl "
+output:
+  pdf_document:
+    latex_engine: xelatex 
+date: "`r Sys.Date()`"
+---
+
+
+
+# Exercise 2
+
+Consider the use of Gibbs sampling to generate samples from a bivariate normal distribution. Let the means be 0,
+the variances be 1, and the correlation be ρ.
+
+Answer: The Gibbs sampler yields more reliable results when the correlation ρ is low, as the conditional distributions are less dependent and mix faster. Variance estimates are accurate across settings, and higher burn-in proportions improve the estimation of the correlation. The estimated means remain close to zero (error < 0.02), indicating good convergence. Overall, Gibbs sampling is effective for this problem due to the tractability of the conditional distributions.
+
+```{r}
+
+library(phonTools)
+ps <- c(0.1, 0.2, 0.3, 0.4, 0.5)
+burn_in_props <- c(0.3, 0.4, 0.5)
+total_samples <- 13000
+results <- data.frame(
+    p = numeric(),
+    burn_in_prop = numeric(),
+    mean_x1 = numeric(),
+    mean_x2 = numeric(),
+    var_x1 = numeric(),
+    var_x2 = numeric(),
+    cov_x1x2 = numeric()
+)
+
+set.seed(123)
+
+for (p in ps) {
+    for (burn_in_prop in burn_in_props) {
+        burn_in <- as.integer(total_samples * burn_in_prop)
+        keep_draws <- total_samples - burn_in
+        mu <- c(0, 0)
+        sigma <- matrix(c(1, p, p, 1), nrow = 2)
+        x_1 <- rep(0, total_samples)
+        x_2 <- rep(0, total_samples)
+        for (i in 2:total_samples) {
+            x_2[i] <- sqrt(1 - p^2) * rnorm(1) + p * x_1[i - 1]
+            x_1[i] <- sqrt(1 - p^2) * rnorm(1) + p * x_2[i]
+        }
+        ygs <- cbind(x_1, x_2)
+        ygs <- ygs[(burn_in + 1):total_samples, ]
+        m <- colMeans(ygs)
+        v <- cov(ygs)
+        results <- rbind(
+            results,
+            data.frame(
+                p = p,
+                burn_in_prop = burn_in_prop,
+                mean_x1 = m[1],
+                mean_x2 = m[2],
+                var_x1 = v[1, 1],
+                var_x2 = v[2, 2],
+                cov_x1x2 = v[1, 2]
+            )
+        )
+    }
+}
+        par(mfrow = c(2, 1))
+        plot(x_1, type = "l", main = "Trace plot of x_1", xlab = "Iteration", ylab = "x_1")
+        plot(x_2, type = "l", main = "Trace plot of x_2", xlab = "Iteration", ylab = "x_2")
+        par(mfrow = c(1, 1))
+
+
+knitr::kable(results, digits = 4, caption = "Comparison of Gibbs Sampling Results for Different p and Burn-in Proportions")
+
+```
+
+
+# Exercise 3
+
+
+It is assumed that the lifetime of light bulbs follows an exponential distribution with parameter $\lambda$. To estimate
+$\lambda$, n light bulbs were tested until they all failed. Their failure times were recorded as $u_{1}, . . . , u_{n}$. In a separate
+experiment, m bulbs were tested, but the individual failure times were not recorded. Only the number of bulbs, r,
+that had failed at time t was recorded. The missing data are the failure times of the bulbs in the second experiment,
+$v_{1}, . . . , v_{m}$.
+
+Let us define the auxiliary variable:
+\( v_1, \dots, v_m \sim \text{Exponential}(\lambda) \): partially observed, with only \( r \) failures before time \( t \); \( r \) are right-censored at time \( t \).
+
+We assume a conjugate Gamma prior:
+\[
+\lambda \sim \text{Gamma}(\alpha, \beta), \quad \text{with density } p(\lambda) \propto \lambda^{\alpha - 1} e^{-\beta \lambda}
+\]
+
+
+The exponential likelihood for fully observed data is:
+\[
+L_{\text{obs}}(\lambda) = \prod_{i=1}^{n} \lambda e^{-\lambda u_i} = \lambda^n e^{-\lambda \sum_{i=1}^n u_i}
+\]
+
+The observed failures in the second group (before time \( t \)) contribute:
+\[
+L_{\text{fail}}(\lambda) = \prod_{j=1}^{r} \lambda e^{-\lambda v_j} = \lambda^r e^{-\lambda \sum_{j=1}^r v_j}
+\]
+
+\[
+L_{\text{cens}}(\lambda) = \prod_{k=1}^{m - r} P(v_k > t \mid \lambda) = \left( e^{-\lambda t} \right)^{m - r} = e^{-\lambda t(m - r)}
+\]
+
+Combining all:
+\[
+L(\lambda \mid \mathbf{u}, \mathbf{v}) = \lambda^{n + r} e^{-\lambda \left( \sum u_i + \sum v_j + t(m - r) \right)}
+\]
+
+Multiplying by the Gamma prior:
+\[
+p(\lambda \mid \text{data}) \propto L(\lambda) \cdot p(\lambda)
+\]
+\[
+\propto \lambda^{n + r} e^{-\lambda \left( \sum u_i + \sum v_j + t(m - r) \right)} \cdot \lambda^{\alpha - 1} e^{-\beta \lambda}
+\]
+\[
+= \lambda^{\alpha + n + r - 1} e^{-\lambda \left( \beta + \sum u_i + \sum v_j + t(m - r) \right)}
+\]
+
+This is the kernel of a Gamma distribution:
+\[
+\lambda \mid \text{data} \sim \text{Gamma}\left( \alpha + n + r,\; \beta + \sum u_i + \sum v_j + t(m - r) \right)
+\]
+
+
+\subsection*{Step 1: Sample \( \lambda \)}
+
+Given \( \mathbf{u}, \mathbf{v}_{1:r}, \mathbf{v}_{r+1:m} \), the conditional posterior is:
+
+\[
+\lambda \mid \mathbf{u}, \mathbf{v} \sim \text{Gamma}\left( \alpha + n + m,\; \beta + \sum_{i=1}^n u_i + \sum_{j=1}^m v_j \right)
+\]
+
+(Note: this includes both observed and imputed \( v_j \)'s)
+
+\subsection*{Step 2: Sample each missing \( v_j \), for \( j = r+1, \dots, m \)}
+
+Each right-censored \( v_j \sim \text{Exponential}(\lambda) \), truncated to the interval \( (t, \infty) \):
+
+\[
+v_j \mid \lambda \sim \text{TruncatedExponential}(\lambda; v_j > t)
+\]
+
+This can be sampled via (This is because the exponential distribution is memoryless):
+
+or equivalently:
+\[
+v_j = t + \text{Exponential}(\lambda)
+\]
+
+For sampling the truncated exponential, and the values from $u_{i}$ we don't need to use
+the Gibbs sampler, as the distribution is known and can be sampled directly.
+
+```{r}
+
+# Data generation
+set.seed(123)
+n <- 100; m <- 20; t <- 1
+lambda_true <- 2
+
+u <- rexp(n, rate = lambda_true)
+v <- rexp(m, rate = lambda_true)
+r <- sum(v <= t)
+
+# Censored data, meaning those that did not fail before time t, but that we did not observe until they had failed.
+v_obs <- v[v <= t]
+v_censored_count <- r
+
+# Gibbs parameters
+alpha <- 1
+beta <- 1
+n_iter <- 10000
+burn_in <- 5000
+
+# Initialization
+lambda <- 1
+lambda_samples <- numeric(n_iter)
+
+# Step 0 : Initial imputation. It is greater than t, because if they had been shorted
+# failure times, we would have include them into the v_obs vector.
+v_missing <- rep(t + 0.1, v_censored_count)
+
+for (iter in 1:n_iter) {
+
+# Step 1: Sample missing failure times (truncated exponential)
+ 
+  v_missing <- t + rexp(v_censored_count, rate = lambda)
+
+  # Step 2: Update lambda from Gamma posterior
+  total_time <- sum(u) + sum(v_obs) + sum(v_missing)*t
+  lambda <- rgamma(1, shape = alpha + n + m, rate = beta + total_time)
+  
+  lambda_samples[iter] <- lambda
+}
+
+# Discard burn-in
+lambda_samples_post <- lambda_samples[(burn_in + 1):n_iter]
+
+# Results
+hist(lambda_samples_post, breaks = 30, main = "Posterior of lambda", xlab = "lambda", xlim = range(c(lambda_samples_post, lambda_true)))
+abline(v = lambda_true, col = "red", lwd = 2)
+
+
+```
+
+As it is possible to observe in the histogram, the posterior distribution of $\lambda$ is not centered around the true value.
+It seems that the MCMC algorithm is not converging properly. This could be due to the fact that the initial values of the missing data are not representative of the true distribution, or that the number of iterations
+ is not sufficient for convergence. Another possibility is that the prior distribution is not informative enough, leading to a posterior distribution that is not centered around the true value. We also consider that 
+ the 

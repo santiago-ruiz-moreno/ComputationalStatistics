@@ -1,5 +1,5 @@
 ---
-title: "**Homework 2**"
+title: "**Homework 4**"
 author: "Santiago Ruiz, Nikita Karetnikov, Felix Ubl "
 output:
   pdf_document:
@@ -287,7 +287,7 @@ Now, as for $E[X| X > t] = t + \frac{1}{\lambda}$ because the exponential distri
 ## iii) Determine the E- and M-step of the EM algorithm.
 
 Let us define a variable $Z$ that takes
-the value of $Z = I(x \leq 1)$ and 0 otherwise. We can compute the expected value of $Z$ as follows:
+the value of $Z = I(x \leq t)$ and 0 otherwise. We can compute the expected value of $Z$ as follows:
 
 $$E[X | Z = z] =   z\left( \frac{1}{\lambda} + \frac{e^{-\lambda t}}{1 - e^{-\lambda t}} \right) + (1-z)(t + \frac{1}{\lambda}) $$
 
@@ -299,7 +299,7 @@ The E-step computes the expected value of the complete-data log-likelihood given
 In the E-Step we compute the value of $$ \lambda $$ based on its previous value then we update in the  M-step. Namely, in the
 E-step we compute the expectation below given the current value of $$ \lambda $$:
 
-$$ E[\text{Log-Likelihood}(x)|Z = z,\lambda_{k}, x_{i}] =  N\log(\lambda_{k}) - \lambda_{k} \sum_{i=1}^{n+m}E[x_{i}| Y = y,\lambda_{k}] $$
+$$ E[\text{Log-Likelihood}(x)|Z = z,\lambda_{k}, x_{i}] =  N\log(\lambda_{k}) - \lambda_{k} \sum_{i=1}^{n+m}E[x_{i}| Z = z,\lambda_{k}] $$
 
 In the M step, we use the values provided by remplacing $v_{i}$ with its expectation, and maximize to finf the new value of $$ \lambda_{k+1} $$:
 
